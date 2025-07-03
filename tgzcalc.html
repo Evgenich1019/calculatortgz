@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGZ калькулятор иксов и гемов</title>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #ff6b6b;
+            --dark: #333;
+            --light: #f8f9fa;
+            --success: #28a745;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .panel {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            flex: 1;
+            min-width: 300px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1, h2 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--secondary);
+        }
+        
+        .modifier {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modifier:last-child {
+            border-bottom: none;
+        }
+        
+        .modifier label {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        
+        .modifier input[type="checkbox"] {
+            transform: scale(1.3);
+            cursor: pointer;
+        }
+        
+        .map-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .map-option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .map-option:hover {
+            border-color: var(--primary);
+            background-color: #f0f7ff;
+        }
+        
+        .map-option.selected {
+            border-color: var(--secondary);
+            background-color: #fff0f0;
+            font-weight: bold;
+        }
+        
+        .results {
+            background-color: var(--light);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .boost-result {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+        }
+        
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #3a5a8f;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e05a5a;
+        }
+        
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 5px;
+        }
+        
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.3s;
+        }
+        
+        .close-modal {
+            float: right;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+        
+        .combinations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .combination-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .combination-x {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .combination-gems {
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .map-selector {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+            
+            .combinations-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .results {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .modifier {
+            transition: background-color 0.3s;
+        }
+        
+        .modifier:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>TGZ калькулятор иксов и гемов</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>🎚️ Модификаторы сложности</h2>
+            <div id="modifiers-container">
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="2"> Режим зомби-игроки</label>
+                    <span>2×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.5"> Сложный режим</label>
+                    <span>1.5×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.3"> Боты зомби герои</label>
+                    <span>1.3×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.5"> Ночь</label>
+                    <span>1.5×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.3"> Все дороже в 2 раза</label>
+                    <span>1.3×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.5"> Только лесопилка</label>
+                    <span>1.5×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.3"> Много зомби</label>
+                    <span>1.3×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.3"> Быстрые зомби</label>
+                    <span>1.3×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.3"> 3× Урон зомби</label>
+                    <span>1.3×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.3"> 3× ХП зомби</label>
+                    <span>1.3×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.1"> Патроны 10× дороже</label>
+                    <span>1.1×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.4"> Постоянная потеря ХП</label>
+                    <span>1.4×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.2"> Скорость передвижения ниже</label>
+                    <span>1.2×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="0.5"> Слабые зомби</label>
+                    <span>0.5×</span>
+                </div>
+                <div class="modifier">
+                    <label><input type="checkbox" name="modifier" value="1.2"> Мазила</label>
+                    <span>1.2×</span>
+                </div>
+            </div>
+            
+            <button id="calculate-all" class="btn btn-secondary">Рассчитать все возможные X</button>
+        </div>
+        
+        <div class="panel">
+            <h2>🗺️ Выбор карты</h2>
+            <div class="map-selector">
+                <div class="map-option" data-value="0.65">
+                    <span class="emoji">⚰️</span> Кладбище
+                </div>
+                <div class="map-option" data-value="0.65">
+                    <span class="emoji">🏛️</span> Рим
+                </div>
+                <div class="map-option" data-value="0.6">
+                    <span class="emoji">🏜️</span> Пустыня
+                </div>
+                <div class="map-option" data-value="0.6">
+                    <span class="emoji">☭</span> СССР
+                </div>
+                <div class="map-option" data-value="0.5">
+                    <span class="emoji">🤠</span> Дикий Запад
+                </div>
+                <div class="map-option" data-value="0.5">
+                    <span class="emoji">🚜</span> Ферма
+                </div>
+                <div class="map-option" data-value="0.4">
+                    <span class="emoji">🏭</span> Завод
+                </div>
+                <div class="map-option" data-value="0.4">
+                    <span class="emoji">🏙️</span> Город
+                </div>
+                <div class="map-option" data-value="0.4">
+                    <span class="emoji">🏯</span> Япония
+                </div>
+                <div class="map-option" data-value="0.3">
+                    <span class="emoji">🎄</span> Рождество
+                </div>
+            </div>
+            
+            <div class="results">
+                <h3>📊 Результаты</h3>
+                <p>Итоговый множитель (X): <span class="result-value" id="total-x">1</span></p>
+                <p>Гемов за победу: <span class="result-value" id="gems-amount">331</span></p>
+                
+                <div class="boost-result">
+                    <h4>С донатным бустом "Головокраб":</h4>
+                    <p>Дополнительно: <span id="boost-amount">500</span> × X = <span id="boost-calculated">500</span></p>
+                    <p>Всего гемов: <span class="result-value" id="total-with-boost">831</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно с комбинациями -->
+    <div id="combinations-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Все возможные X для выбранной карты</h2>
+            <div class="combinations-grid" id="combinations-list"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Элементы DOM
+            const mapOptions = document.querySelectorAll('.map-option');
+            const modifiers = document.querySelectorAll('input[name="modifier"]');
+            const totalXElement = document.getElementById('total-x');
+            const gemsAmountElement = document.getElementById('gems-amount');
+            const boostAmountElement = document.getElementById('boost-amount');
+            const boostCalculatedElement = document.getElementById('boost-calculated');
+            const totalWithBoostElement = document.getElementById('total-with-boost');
+            const calculateAllBtn = document.getElementById('calculate-all');
+            const combinationsModal = document.getElementById('combinations-modal');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const combinationsList = document.getElementById('combinations-list');
+            
+            // Текущие значения
+            let selectedMapValue = 1; // По умолчанию базовая сложность
+            let selectedModifiers = [];
+            
+            // Базовые значения
+            const BASE_GEMS = 331;
+            const BOOST_BASE = 500;
+            
+            // Обработчики событий
+            mapOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Удаляем выделение у всех карт
+                    mapOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Выделяем выбранную карту
+                    this.classList.add('selected');
+                    
+                    // Обновляем значение карты
+                    selectedMapValue = parseFloat(this.dataset.value);
+                    
+                    // Пересчитываем
+                    calculateResults();
+                });
+            });
+            
+            modifiers.forEach(mod => {
+                mod.addEventListener('change', function() {
+                    // Обновляем список модификаторов
+                    selectedModifiers = Array.from(modifiers)
+                        .filter(m => m.checked)
+                        .map(m => parseFloat(m.value));
+                    
+                    // Пересчитываем
+                    calculateResults();
+                });
+            });
+            
+            calculateAllBtn.addEventListener('click', function() {
+                showAllCombinations();
+            });
+            
+            closeModalBtn.addEventListener('click', function() {
+                combinationsModal.style.display = 'none';
+            });
+            
+            // Закрытие модального окна при клике вне его
+            window.addEventListener('click', function(event) {
+                if (event.target === combinationsModal) {
+                    combinationsModal.style.display = 'none';
+                }
+            });
+            
+            // Функция расчета результатов
+            function calculateResults() {
+                // Рассчитываем общий множитель
+                let totalX = selectedMapValue;
+                
+                selectedModifiers.forEach(mod => {
+                    totalX *= mod;
+                });
+                
+                // Округляем до 2 знаков после запятой
+                totalX = Math.round(totalX * 100) / 100;
+                
+                // Рассчитываем гемы
+                const gems = Math.round(BASE_GEMS * totalX);
+                const boostCalculated = Math.round(BOOST_BASE * totalX);
+                const totalWithBoost = gems + boostCalculated;
+                
+                // Обновляем DOM
+                totalXElement.textContent = totalX;
+                gemsAmountElement.textContent = gems;
+                boostCalculatedElement.textContent = boostCalculated;
+                totalWithBoostElement.textContent = totalWithBoost;
+            }
+            
+            // Функция показа всех комбинаций для выбранной карты
+            function showAllCombinations() {
+                combinationsList.innerHTML = '';
+                
+                // Получаем все уникальные множители
+                const uniqueMultipliers = Array.from(modifiers).map(m => parseFloat(m.value));
+                
+                // Добавляем базовый множитель (1)
+                const allMultipliers = [1];
+                
+                // Генерируем все возможные произведения множителей
+                function generateProducts(current, index) {
+                    if (index >= uniqueMultipliers.length) return;
+                    
+                    // Не включаем текущий множитель
+                    generateProducts(current, index + 1);
+                    
+                    // Включаем текущий множитель
+                    const newCurrent = current * uniqueMultipliers[index];
+                    allMultipliers.push(newCurrent);
+                    generateProducts(newCurrent, index + 1);
+                }
+                
+                generateProducts(1, 0);
+                
+                // Удаляем дубликаты и сортируем
+                const uniqueSortedMultipliers = [...new Set(allMultipliers)]
+                    .map(x => Math.round(x * 100) / 100)
+                    .sort((a, b) => a - b);
+                
+                // Для каждого множителя рассчитываем гемы
+                uniqueSortedMultipliers.forEach(mult => {
+                    const totalX = Math.round(selectedMapValue * mult * 100) / 100;
+                    const gems = Math.round(BASE_GEMS * totalX);
+                    const totalWithBoost = gems + Math.round(BOOST_BASE * totalX);
+                    
+                    // Создаем элемент для отображения
+                    const combElement = document.createElement('div');
+                    combElement.className = 'combination-item';
+                    
+                    combElement.innerHTML = `
+                        <div class="combination-x">${totalX}×</div>
+                        <div class="combination-gems">${gems} (<span style="color: var(--success)">${totalWithBoost}</span>)</div>
+                    `;
+                    
+                    combinationsList.appendChild(combElement);
+                });
+                
+                // Показываем модальное окно
+                combinationsModal.style.display = 'block';
+            }
+            
+            // Инициализация - выбираем первую карту
+            if (mapOptions.length > 0) {
+                mapOptions[0].click();
+            }
+        });
+    </script>
+</body>
+</html>
